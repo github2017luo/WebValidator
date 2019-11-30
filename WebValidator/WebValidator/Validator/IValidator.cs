@@ -7,5 +7,6 @@ namespace WebValidator.Validator
     public interface IValidator
     {
         List<ErrorDto> ValidateUrls();
+        List<ErrorDto> ValidateImages();
     }
 }

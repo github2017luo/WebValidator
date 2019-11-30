@@ -39,17 +39,23 @@ namespace WebValidator.Validator
             return errorList;
         }
 
-        public List<Tuple<int, Uri>> ValidateImages()
+        // TODO: Check how it behaves with base 64 encoded content. 
+        public List<ErrorDto> ValidateImages()
         {
             var elements = _search.GetBy(By.XPath(".//img[@src]"));
-            var errorList = new List<Tuple<int, Uri>>();
+            var errorList = new List<ErrorDto>();
             foreach (var webElement in elements)
             {
-                var uri = new Uri(webElement.GetAttribute("href"));
+                var uri = new Uri(webElement.GetAttribute("src"));
                 var status = _request.SendHeadRequest(uri);
-                if (status >= 300 && status <= 599)
+                if (status >= 200 && status <= 599)
                 {
-                    errorList.Add(Tuple.Create(status, uri));
+                    errorList.Add(new ErrorDto()
+                    {
+                        Element = webElement,
+                        StatusCode = status,
+                        Uri = uri
+                    });
                 }
             }
             return errorList;
