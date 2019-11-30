@@ -14,11 +14,13 @@ namespace WebValidator
             var validator = new Validator.Validator(driver,
                 new Uri(args[1]),
                 new SearchElements(driver),
-                new Request.Request());
-            Logger.Log("Checking URLs.");
+                new Request.Request(),
+                5,
+                new ConsoleLogger());
+            Logger.Log(DateTime.Now + " Checking URLs.");
             var errors = validator.ValidateUrls();
             Logger.LogErrors(errors);
-            Logger.Log("Checking images.");
+            Logger.Log(DateTime.Now + " Checking images.");
             errors = validator.ValidateImages();
             Logger.LogErrors(errors);
         }

@@ -5,7 +5,7 @@ namespace WebValidator.Request
 {
     public class Request : IRequest
     {
-        public int SendHeadRequest(Uri uri)
+        public int SendHeadRequest(Uri uri) 
         {
             var client = new RestClient(uri);
             var request = new RestRequest(Method.HEAD);
