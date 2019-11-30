@@ -10,7 +10,7 @@ namespace WebValidator.Logger
         {
             if (errors.Count == 0)
             {
-                Console.WriteLine("No http errors!");
+                Console.WriteLine("No errors!");
                 return;
             }
 
@@ -18,6 +18,11 @@ namespace WebValidator.Logger
             {
                 Console.WriteLine($"{error.Uri}, code: {error.StatusCode}");
             }
+        }
+
+        public void Log(string log)
+        {
+            Console.WriteLine(log);
         }
     }
 }
