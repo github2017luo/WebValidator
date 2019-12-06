@@ -6,7 +6,7 @@ namespace WebValidator.Validator
 {
     public interface IValidator
     {
-        List<ErrorDto> ValidateUrls();
-        List<ErrorDto> ValidateImages();
+        List<ErrorDto> ValidateUrls(ICollection<string> urls);
+        //List<ErrorDto> ValidateImages();
     }
 }
