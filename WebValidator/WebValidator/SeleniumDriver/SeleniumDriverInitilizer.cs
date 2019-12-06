@@ -1,9 +1,6 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Firefox;
 using WebValidator.Common;
 
 namespace WebValidator.SeleniumDriver
