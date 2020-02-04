@@ -26,7 +26,7 @@ namespace WebValidator
         {
             if (depth > _depth)
                 return;
-            new ConsoleLogger().Log("Working on: " + url + " Depth: " + depth);
+            //new ConsoleLogger().Log("Working on: " + url + " Depth: " + depth);
             var urls = new List<string>();
             using (var page = new Page.SeleniumPage(browser, logger, driverInitializer))
             {
@@ -50,7 +50,7 @@ namespace WebValidator
         {
             if (depth > _depth)
                 return;
-            new ConsoleLogger().Log("Working on: " + url + " Depth: " + depth);
+            //new ConsoleLogger().Log("Working on: " + url + " Depth: " + depth);
             List<string> urls;
             using (var page = new Page.HtmlPage(logger))
             {

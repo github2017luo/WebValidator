@@ -48,7 +48,7 @@ namespace WebValidator.Page
         {
             var list = new List<string>();
             _htmlDoc.DocumentNode.SelectNodes($".//{htmlTag}[@{attribute}]")?.ToList().ForEach(e => list.Add(e.GetAttributeValue(attribute,"")));
-            _logger.Log($"Found {list.Count} elements");
+            //_logger.Log($"Found {list.Count} elements");
             return list;
         }
 
