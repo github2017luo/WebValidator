@@ -4,11 +4,11 @@ using OpenQA.Selenium;
 
 namespace WebValidator.Search
 {
-    public class SearchElements : ISearchElements
+    public class SeleniumSearchElements : ISearchElements
     {
         private readonly IWebDriver _driver;
 
-        public SearchElements(IWebDriver driver)
+        public SeleniumSearchElements(IWebDriver driver)
         {
             _driver = driver;
         }

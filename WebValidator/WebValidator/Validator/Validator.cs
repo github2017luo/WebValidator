@@ -21,17 +21,44 @@ namespace WebValidator.Validator
             _visitedPages ??= new ConcurrentDictionary<string, bool>();
         }
 
-        public List<ErrorDto> ValidateUrls(ICollection<string> urls)
+        //public List<ErrorDto> ValidateUrls(ICollection<string> urls)
+        //{
+        //    var errorList = new List<ErrorDto>();
+        //    Parallel.ForEach(urls, url =>
+        //        //foreach (var url in urls)
+        //    {
+        //        //_logger.Log("Working on: " + url);
+
+        //        if (AlreadyVisited(url))
+        //        {
+        //            _logger.Log("SeleniumPage already visited.");
+        //            return; //continue;
+        //        }
+
+        //        var status = _request.SendHeadRequest(new Uri(url));
+        //        if (IsErrorStatus(status))
+        //        {
+        //            AddError(errorList, status, url);
+        //        }
+
+        //        //TODO: Handle the false case?
+        //        if (_visitedPages.TryAdd(url, true))
+        //            _logger.Log("Success! Added " + url);
+        //    });//}
+        //    return errorList;
+        //}
+
+        public List<ErrorDto> Validate(IEnumerable<string> urls)
         {
             var errorList = new List<ErrorDto>();
             Parallel.ForEach(urls, url =>
                 //foreach (var url in urls)
             {
-                _logger.Log("Working on: " + url);
+                //_logger.Log("Working on: " + url);
 
                 if (AlreadyVisited(url))
                 {
-                    _logger.Log("Page already visited.");
+                    _logger.Log($"Url {url} already visited.");
                     return; //continue;
                 }
 
@@ -88,6 +115,11 @@ namespace WebValidator.Validator
                 StatusCode = status,
                 Uri = uri
             });
+        }
+
+        public List<ErrorDto> ValidateUrls(ICollection<string> urls)
+        {
+            throw new NotImplementedException();
         }
     }
 }

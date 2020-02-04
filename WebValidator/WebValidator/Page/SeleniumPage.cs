@@ -8,24 +8,23 @@ using WebValidator.SeleniumDriver;
 
 namespace WebValidator.Page
 {
-    public class Page : IPage
+    public class SeleniumPage : IPage, IDisposable
     {
         private readonly ISearchElements _searchElements;
         private readonly ILogger _logger;
         private readonly IWebDriver _webDriver;
 
-        public Page(string browser, ILogger logger, IDriverInitializer driverInitializer)
+        public SeleniumPage(string browser, ILogger logger, IDriverInitializer driverInitializer)
         {
             _webDriver = driverInitializer.InitializeDriver(browser);
-            _searchElements = new SearchElements(_webDriver);
+            _searchElements = new SeleniumSearchElements(_webDriver);
             _logger = logger;
         }
 
-        public IWebDriver OpenPage(Uri url, int waitSeconds)
+        public void OpenPage(Uri url, int waitSeconds)
         {
             _webDriver.Navigate().GoToUrl(url);
             Wait(waitSeconds);
-            return _webDriver;
         }
 
         public ICollection<string> GetAttributes(string htmlTag, string attribute)
@@ -35,6 +34,12 @@ namespace WebValidator.Page
                 .ForEach(e => list.Add(e.GetAttribute(attribute)));
             _logger.Log($"Found {list.Count} elements");
             return list;
+        }
+
+        public void Dispose()
+        {
+            _logger.Log("Dispose of browser.");
+            _webDriver?.Dispose();
         }
 
         private void Wait(int waitSeconds)
