@@ -116,5 +116,10 @@ namespace WebValidator.Validator
                 Uri = uri
             });
         }
+
+        public List<ErrorDto> ValidateUrls(ICollection<string> urls)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
