@@ -3,45 +3,54 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using HtmlAgilityPack;
+using WebValidator.Crawler;
 using WebValidator.Json;
 using WebValidator.Logger;
-using WebValidator.Page;
-using WebValidator.SeleniumDriver;
 
 namespace WebValidator
 {
     internal class Program
     {
-        private static string _browser;
-        private static IPage _page;
         private static void Main(string[] args)
         {
+            var depth = GetDepth(args[2]);
+            ILogger logger = new ConsoleLogger();
             var watch = Stopwatch.StartNew();
-            var search = new Bfs(1, "https://wsti.pl");
-            search.Search(0, new ConsoleLogger(), "https://wsti.pl");
-            var pages = search.GetVisitedPages();
+            var crawler = new HtmlCrawler(logger, depth, args[1]);
+            crawler.Crawl(0, args[1]);
+            var pages = crawler.GetVisitedPages();
             watch.Stop();
-            foreach (var error in search.GetErrors())
+
+            foreach (var error in crawler.GetErrors())
             {
-                Console.WriteLine($"{error.Key} {error.Value}");
+                logger.Log($"{error.Key} {error.Value}");
             }
-            Console.WriteLine($"Found: {pages.Count}");
-            Console.WriteLine(watch.Elapsed);
 
-            var k = pages.Keys.ToList();
-            k.Sort();
+            logger.Log($"Found: {pages.Count}");
+            logger.Log("Search time: " + watch.Elapsed);
 
-            var dto = new VisitedPagesDto
-            {
-                Pages = k
-            };
-
-            File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.json", new SaveToJson().Serialize(dto));
+            SaveToJson(pages);
 
 
             ////file:///D:\\Studia\\WebValidator\\Web\\Web1.html
+        }
+
+        private static void SaveToJson(IReadOnlyDictionary<string, bool> pages)
+        {
+            var keys = pages.Keys.ToList();
+            keys.Sort();
+
+            var dto = new VisitedPagesDto
+            {
+                Pages = keys
+            };
+
+            File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.json", new SaveToJson().Serialize(dto));
+        }
+
+        private static int GetDepth(string depth)
+        {
+            return Int32.Parse(depth);
         }
 
         //private static IEnumerable<string> Check(string url)
