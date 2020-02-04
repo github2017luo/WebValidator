@@ -38,7 +38,7 @@ namespace WebValidator
                 Pages = k
             };
 
-            File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.txt", new SaveToJson().Serialize(dto));
+            File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.json", new SaveToJson().Serialize(dto));
 
 
             ////file:///D:\\Studia\\WebValidator\\Web\\Web1.html
