@@ -6,15 +6,15 @@ using WebValidator.Logger;
 using WebValidator.Search;
 using WebValidator.SeleniumDriver;
 
-namespace WebValidator.Page
+namespace WebValidator.Crawler
 {
-    public class SeleniumPage : IPage, IDisposable
+    public class SeleniumCrawler// : ICrawler
     {
         private readonly ISearchElements _searchElements;
         private readonly ILogger _logger;
         private readonly IWebDriver _webDriver;
 
-        public SeleniumPage(string browser, ILogger logger, IDriverInitializer driverInitializer)
+        public SeleniumCrawler(string browser, ILogger logger, IDriverInitializer driverInitializer)
         {
             _webDriver = driverInitializer.InitializeDriver(browser);
             _searchElements = new SeleniumSearchElements(_webDriver);
@@ -27,7 +27,7 @@ namespace WebValidator.Page
             Wait(waitSeconds);
         }
 
-        public ICollection<string> GetAttributes(string htmlTag, string attribute)
+        public IEnumerable<string> GetAttributes(string htmlTag, string attribute)
         {
             var list = new List<string>();
             _searchElements.GetBy(By.XPath($".//{htmlTag}[@{attribute}]"))
