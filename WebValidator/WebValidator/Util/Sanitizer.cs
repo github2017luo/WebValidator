@@ -5,7 +5,7 @@ namespace WebValidator.Util
 {
     public static class Sanitizer
     {
-        public static ICollection<string> SanitizeUrls(IEnumerable<string> urls, string baseUrl, IReadOnlyDictionary<string, bool> visitedPages)
+        public static IEnumerable<string> SanitizeUrls(IEnumerable<string> urls, string baseUrl, IReadOnlyDictionary<string, bool> visitedPages)
         {
             var sanitized = urls.Distinct().Select(u =>
             {
