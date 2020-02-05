@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using WebValidator.Configuration;
 using WebValidator.Crawler;
 using WebValidator.Json;
 using WebValidator.Logger;
@@ -11,13 +11,16 @@ namespace WebValidator
 {
     internal class Program
     {
-        private static void Main(string[] args)
+        private static string _baseUrl;
+        private static string _browser;
+        private static int _depth;
+        private static void Main()
         {
-            var depth = GetDepth(args[2]);
+            InitConfig();
             ILogger logger = new ConsoleLogger();
             var watch = Stopwatch.StartNew();
-            var crawler = new HtmlCrawler(logger, depth, args[1]);
-            crawler.Crawl(0, args[1]);
+            var crawler = new HtmlCrawler(logger, _depth, _baseUrl);
+            crawler.Crawl(0,_baseUrl);
             var pages = crawler.GetVisitedPages();
             watch.Stop();
 
@@ -35,6 +38,14 @@ namespace WebValidator
             ////file:///D:\\Studia\\WebValidator\\Web\\Web1.html
         }
 
+        private static void InitConfig()
+        {
+            var config = ConfigurationLoader.GetOption<Config>();
+            _baseUrl = config.Url;
+            _browser = config.Browser;
+            _depth = config.Depth;
+        }
+
         private static void SaveToJson(IReadOnlyDictionary<string, bool> pages)
         {
             var keys = pages.Keys.ToList();
@@ -46,11 +57,6 @@ namespace WebValidator
             };
 
             File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.json", new SaveToJson().Serialize(dto));
-        }
-
-        private static int GetDepth(string depth)
-        {
-            return Int32.Parse(depth);
         }
 
         //private static IEnumerable<string> Check(string url)
