@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using WebValidator.Logger;
@@ -30,7 +29,7 @@ namespace WebValidator.Crawler
         }
 
 
-        public void OpenPage(Uri url, int waitSeconds = 0)
+        public void OpenPage(Uri url)
         {
             try
             {
@@ -46,8 +45,6 @@ namespace WebValidator.Crawler
                 _errors.TryAdd(url, e.Message);
                 _htmlDoc = new HtmlDocument();
             }
-
-            Wait(waitSeconds);
         }
 
         public IEnumerable<string> GetAttributes(string htmlTag, string attribute)
@@ -93,15 +90,6 @@ namespace WebValidator.Crawler
         public IDictionary<Uri, string> GetErrors()
         {
             return _errors;
-        }
-        private void Wait(int waitSeconds)
-        {
-            if (waitSeconds <= 0)
-            {
-                return;
-            }
-            _logger.Log($"Waiting {waitSeconds} seconds.");
-            Thread.Sleep(waitSeconds * 1000);
         }
     }
 }
