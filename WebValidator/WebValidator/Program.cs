@@ -32,7 +32,7 @@ namespace WebValidator
             logger.Log($"Found: {pages.Count}");
             logger.Log("Search time: " + watch.Elapsed);
 
-            SaveToJson(pages);
+            //SaveToJson(pages);
 
 
             ////file:///D:\\Studia\\WebValidator\\Web\\Web1.html

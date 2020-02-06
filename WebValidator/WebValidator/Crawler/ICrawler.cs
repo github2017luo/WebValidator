@@ -8,6 +8,6 @@ namespace WebValidator.Crawler
         void OpenPage(Uri url);
         IEnumerable<string> GetAttributes(string htmlTag, string attribute);
         void Crawl(int depth, string url);
-        IReadOnlyDictionary<string, bool> GetVisitedPages();
+        IReadOnlyDictionary<string, Node> GetVisitedPages();
     }
 }

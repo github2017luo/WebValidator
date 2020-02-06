@@ -39,5 +39,13 @@ namespace WebValidator
         {
             return _path;
         }
+
+        public ICollection<string> GetParentNodes()
+        {
+            lock (_parentNodes)
+            {
+                return _parentNodes;
+            }
+        }
     }
 }
