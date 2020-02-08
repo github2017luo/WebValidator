@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using WebValidator.Logger;
@@ -13,7 +14,6 @@ namespace WebValidator.Crawler
     {
         private readonly ILogger _logger;
         private HtmlDocument _htmlDoc;
-        private static ConcurrentDictionary<Uri, string> _errors;
         private static ConcurrentDictionary<string, Node> _visitedPages;
         private static int? _depth;
         private static string _baseUrl;
@@ -25,44 +25,16 @@ namespace WebValidator.Crawler
             _depth ??= depth;
             _visitedPages ??= new ConcurrentDictionary<string, Node>();
             _baseUrl = baseUrl;
-            _errors ??= new ConcurrentDictionary<Uri, string>();
-        }
-
-
-        public void OpenPage(Uri url)
-        {
-            try
-            {
-                _htmlDoc = new HtmlWeb().Load(url);
-            }
-            catch (ArgumentException e)
-            {
-                _errors.TryAdd(url, e.Message);
-                _htmlDoc = new HtmlDocument();
-            }
-            catch (System.Net.WebException e)
-            {
-                _errors.TryAdd(url, e.Message);
-                _htmlDoc = new HtmlDocument();
-            }
-        }
-
-        public IEnumerable<string> GetAttributes(string htmlTag, string attribute)
-        {
-            var list = new List<string>();
-            _htmlDoc.DocumentNode.SelectNodes($".//{htmlTag}[@{attribute}]")
-                ?.ToList()
-                .ForEach(e => list.Add(e.GetAttributeValue(attribute,
-                    "no attribute")));
-            return list;
         }
 
         public void Crawl(int depth, string url)
         {
+            var node = _visitedPages.ContainsKey(url) ? _visitedPages[url] : new Node(url);
             if (depth > _depth) return;
-            OpenPage(new Uri(url));
+            var status = OpenPage(node);
 
             MakeUrlVisited(url);
+            node.SetStatusCode(status);
             
             var urls = GetAttributes("a", "href").ToList();
             urls = Sanitizer.SanitizeUrls(urls, _baseUrl, _visitedPages).ToList();
@@ -79,15 +51,15 @@ namespace WebValidator.Crawler
                 });
         }
 
-        private static ICollection<string> AddParentNode(string url, List<string> urls)
+        private static IEnumerable<string> AddParentNode(string url, IEnumerable<string> urls)
         {
-            ICollection<string> urlsToDelete = new List<string>();
+            ICollection<string> existingUrls = new List<string>();
             foreach (var u in urls)
             {
                 if (_visitedPages.ContainsKey(u))
                 {
                     _visitedPages[u].AddParentNode(url);
-                    urlsToDelete.Add(u);
+                    existingUrls.Add(u);
                 }
 
                 else
@@ -98,7 +70,46 @@ namespace WebValidator.Crawler
                 }
             }
 
-            return urlsToDelete;
+            return existingUrls;
+        }
+
+        private HttpStatusCode OpenPage(Node node)
+        {
+            try
+            {
+                return LoadPage(node);
+            }
+            catch (Exception)
+            {
+                // Try to load the page once more time, before reporting an error.
+                try
+                {
+                    return LoadPage(node);
+                }
+                catch (Exception e)
+                {
+                    node.AddError(e.Message)
+                        .AddError(e.ToString());
+                    return default;
+                }
+            }
+        }
+
+        private HttpStatusCode LoadPage(Node node)
+        {
+            var web = new HtmlWeb();
+            _htmlDoc = web.Load(node.GetUrl());
+            return web.StatusCode;
+        }
+
+        private IEnumerable<string> GetAttributes(string htmlTag, string attribute)
+        {
+            var list = new List<string>();
+            _htmlDoc.DocumentNode.SelectNodes($".//{htmlTag}[@{attribute}]")
+                ?.ToList()
+                .ForEach(e => list.Add(e.GetAttributeValue(attribute,
+                    "no attribute")));
+            return list;
         }
 
         private static void MakeUrlVisited(string url)
@@ -113,7 +124,7 @@ namespace WebValidator.Crawler
             }
         }
 
-        public IReadOnlyDictionary<string, Node> GetVisitedPages()
+        public IReadOnlyDictionary<string, Node> GetPages()
         {
             return _visitedPages ?? new ConcurrentDictionary<string, Node>();
         }
@@ -121,11 +132,6 @@ namespace WebValidator.Crawler
         public void Dispose()
         {
             
-        }
-
-        public IDictionary<Uri, string> GetErrors()
-        {
-            return _errors;
         }
     }
 }
