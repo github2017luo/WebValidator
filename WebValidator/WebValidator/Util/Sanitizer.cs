@@ -5,7 +5,7 @@ namespace WebValidator.Util
 {
     public static class Sanitizer
     {
-        public static IEnumerable<string> SanitizeUrls(IEnumerable<string> urls, string baseUrl, IReadOnlyDictionary<string, bool> visitedPages)
+        public static IEnumerable<string> SanitizeUrls(IEnumerable<string> urls, string baseUrl, IReadOnlyDictionary<string, Node> visitedPages)
         {
             var sanitized = urls.Distinct().Select(u =>
             {
@@ -14,8 +14,6 @@ namespace WebValidator.Util
                 return u;
             }).ToList();
             sanitized.RemoveAll(u => !u.StartsWith("http"));
-            var visited = visitedPages.Where(p => !p.Value).Select(p => p.Key);
-            sanitized = sanitized.Except(visited).ToList();
             return sanitized;
         }
     }
