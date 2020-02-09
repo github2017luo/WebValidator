@@ -14,7 +14,7 @@ namespace WebValidator.Crawler
     {
         private readonly ILogger _logger;
         private HtmlDocument _htmlDoc;
-        private static ConcurrentDictionary<string, Node> _visitedPages;
+        private static ConcurrentDictionary<string, Node> _pages;
         private static int? _depth;
         private static string _baseUrl;
 
@@ -23,32 +23,55 @@ namespace WebValidator.Crawler
         {
             _logger = logger;
             _depth ??= depth;
-            _visitedPages ??= new ConcurrentDictionary<string, Node>();
+            _pages ??= new ConcurrentDictionary<string, Node>();
             _baseUrl = baseUrl;
         }
 
         public void Crawl(int depth, string url)
         {
-            var node = _visitedPages.ContainsKey(url) ? _visitedPages[url] : new Node(url);
             if (depth > _depth) return;
+            var node = GetNode(url);
             var status = OpenPage(node);
 
-            MakeUrlVisited(url);
-            node.SetStatusCode(status);
+            node.MakeVisited()
+                .SetStatusCode(status);
+            _pages[url] = node;
             
             var urls = GetAttributes("a", "href").ToList();
-            urls = Sanitizer.SanitizeUrls(urls, _baseUrl, _visitedPages).ToList();
+            urls = Sanitizer.SanitizeUrls(urls, _baseUrl, _pages).ToList();
 
             var urlsToDelete = AddParentNode(url, urls);
             urls = urls.Except(urlsToDelete).ToList();
 
             Parallel.ForEach(urls,
+                new ParallelOptions { MaxDegreeOfParallelism = 5 },
                 url =>
                 {
-                    if (_visitedPages[url].GetVisited()) return;
+                    if (_pages[url].GetVisited()) return;
                     if (!url.StartsWith(_baseUrl)) return;
                     Crawl(depth + 1, url);
                 });
+        }
+
+        private static Node GetNode(string url)
+        {
+            Node node;
+            if (_pages.ContainsKey(url))
+            {
+                node = _pages[url];
+            }
+            else
+            {
+                node = new Node(url);
+                _pages[url] = node;
+            }
+
+            return node;
+        }
+
+        private static void SetStatusCode(string url, HttpStatusCode status)
+        {
+            _pages[url].SetStatusCode(status);
         }
 
         private static IEnumerable<string> AddParentNode(string url, IEnumerable<string> urls)
@@ -56,9 +79,9 @@ namespace WebValidator.Crawler
             ICollection<string> existingUrls = new List<string>();
             foreach (var u in urls)
             {
-                if (_visitedPages.ContainsKey(u))
+                if (_pages.ContainsKey(u))
                 {
-                    _visitedPages[u].AddParentNode(url);
+                    _pages[u].AddParentNode(url);
                     existingUrls.Add(u);
                 }
 
@@ -66,7 +89,7 @@ namespace WebValidator.Crawler
                 {
                     var node = new Node(u)
                         .AddParentNode(url);
-                    _visitedPages.TryAdd(u, node);
+                    _pages.TryAdd(u, node);
                 }
             }
 
@@ -112,21 +135,9 @@ namespace WebValidator.Crawler
             return list;
         }
 
-        private static void MakeUrlVisited(string url)
-        {
-            if (_visitedPages.ContainsKey(url))
-            {
-                _visitedPages[url].MakeVisited();
-            }
-            else
-            {
-                _visitedPages[url] = new Node(url).MakeVisited();
-            }
-        }
-
         public IReadOnlyDictionary<string, Node> GetPages()
         {
-            return _visitedPages ?? new ConcurrentDictionary<string, Node>();
+            return _pages ?? new ConcurrentDictionary<string, Node>();
         }
 
         public void Dispose()
