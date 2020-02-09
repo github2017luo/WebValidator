@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using WebValidator.Validator.Error;
+﻿using System.Collections.Generic;
 
 namespace WebValidator.Validator
 {
     public interface IValidator
     {
-        List<ErrorDto> ValidateUrls(ICollection<string> urls);
-        //List<ErrorDto> ValidateImages();
+        void Validate(IEnumerable<Node> nodes);
     }
 }
