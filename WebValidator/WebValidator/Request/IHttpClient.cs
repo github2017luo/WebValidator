@@ -5,7 +5,7 @@ namespace WebValidator.Request
 {
     public interface IHttpClient
     {
-        HttpStatusCode SendHeadRequest(Uri uri);
+        HttpStatusCode SendHeadRequest(Node node);
         HttpStatusCode SendGetRequest(Uri uri);
     }
 }
