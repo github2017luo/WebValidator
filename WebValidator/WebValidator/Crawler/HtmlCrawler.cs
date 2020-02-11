@@ -44,7 +44,7 @@ namespace WebValidator.Crawler
             urls = urls.Except(urlsToDelete).ToList();
 
             Parallel.ForEach(urls,
-                new ParallelOptions { MaxDegreeOfParallelism = 5 },
+                new ParallelOptions { MaxDegreeOfParallelism = 2 },
                 url =>
                 {
                     if (_pages[url].GetVisited()) return;
@@ -67,11 +67,6 @@ namespace WebValidator.Crawler
             }
 
             return node;
-        }
-
-        private static void SetStatusCode(string url, HttpStatusCode status)
-        {
-            _pages[url].SetStatusCode(status);
         }
 
         private static IEnumerable<string> AddParentNode(string url, IEnumerable<string> urls)
