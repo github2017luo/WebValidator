@@ -1,0 +1,73 @@
+﻿@page "/validator"
+
+@using System.IO
+@using System.Net
+@using Microsoft.AspNetCore.Mvc.RazorPages
+@using Newtonsoft.Json
+@using WebValidator.Json
+
+@if (str == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <button @onclick="DisplayWarnings">Display Warnings</button>
+    <button @onclick="DisplayErrors">Display Errors</button>
+    <button @onclick="DisplayOK">Display OK</button>
+
+
+    <table>
+        <thead>
+            <tr>
+                <th class="url-td">Status</th>
+                <th class="url-td">Url</th>
+                <th class="url-td">Parent Urls</th>
+                <th class="url-td">Errors</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var nodeDto in Pages)
+            {
+                <tr>
+                    <td class="url-td">@GetWarning(nodeDto.StatusCode)</td>
+                    <td class="url-td">@nodeDto.Url</td>
+                    <td class="url-td">@String.Join(Environment.NewLine, @nodeDto.ParentNodes)</td>
+                    <td class="url-td">@String.Join(Environment.NewLine, @nodeDto.Errors)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code
+{
+    VisitedPagesDto str;
+    private List<NodeDto> Pages;
+
+    protected override void OnInitialized()
+    {
+        str = JsonConvert.DeserializeObject<VisitedPagesDto>(File.ReadAllText(Directory.GetCurrentDirectory() + @"\json.json"));
+        Pages = str.Pages;
+    }
+
+    private static string GetWarning(HttpStatusCode status)
+    {
+        return status == default ? "WARNING" : status.ToString();
+    }
+
+    private void DisplayWarnings()
+    {
+        Pages = str.Pages.FindAll(p => p.StatusCode == default);
+    }
+
+    private void DisplayErrors()
+    {
+        Pages = str.Pages.FindAll(p => p.StatusCode != HttpStatusCode.OK && p.StatusCode != default);
+    }
+
+    private void DisplayOK()
+    {
+        Pages = str.Pages.FindAll(p => p.StatusCode == HttpStatusCode.OK);
+    }
+}
