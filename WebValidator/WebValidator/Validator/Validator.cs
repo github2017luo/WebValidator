@@ -1,6 +1,6 @@
-﻿using System;
+﻿using RestSharp;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using WebValidator.Request;
 
@@ -17,30 +17,33 @@ namespace WebValidator.Validator
 
         public void Validate(IEnumerable<Node> nodes)
         {
-
-            //foreach (var node in nodes)
-            //{
-            //    //Console.Write(node.GetUrl() + node.GetVisited());
-            //    if (node.GetVisited())
-            //    {
-            //        Console.WriteLine("Already visited!");
-            //        return;
-            //    }
-            //    var status = _httpClient.SendHeadRequest(node);
-            //    //Console.Write(status);
-            //    node.SetStatusCode(status)
-            //        .MakeVisited();
-
-            //    //Console.WriteLine(node.GetVisited());
-            //}
-
             Parallel.ForEach(nodes, node =>
             {
                 if (node.GetVisited()) return;
-                var status = _httpClient.SendHeadRequest(node);
-                node.SetStatusCode(status)
+                var response = _httpClient.SendHeadRequest(node);
+                if (response.StatusCode == default)
+                {
+                    if (response.ErrorMessage.Equals(
+                        "An error occurred while sending the request. The response ended prematurely."))
+                    {
+                        response = SendRequest(node);
+                    }
+                    if (response.StatusCode == default)
+                    {
+                        node.AddError(response.ErrorMessage);
+                    }
+                }
+
+                node.SetStatusCode(response.StatusCode)
                     .MakeVisited();
             });
+        }
+
+        private IRestResponse SendRequest(Node node)
+        {
+            Thread.Sleep(500);
+            var response = _httpClient.SendHeadRequest(node);
+            return response;
         }
     }
 }
