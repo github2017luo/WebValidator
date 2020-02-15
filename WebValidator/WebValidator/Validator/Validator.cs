@@ -1,125 +1,49 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using RestSharp;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
-using WebValidator.Logger;
 using WebValidator.Request;
-using WebValidator.Validator.Error;
 
 namespace WebValidator.Validator
 {
     public class Validator : IValidator
     {
-        private readonly IRequest _request;
-        private readonly ILogger _logger;
-        private static ConcurrentDictionary<string, bool> _visitedPages;
+        private readonly IHttpClient _httpClient;
 
-        public Validator(IRequest request, ILogger logger)
+        public Validator(IHttpClient httpClient)
         {
-            _request = request;
-            _logger = logger;
-            _visitedPages ??= new ConcurrentDictionary<string, bool>();
+            _httpClient = httpClient;
         }
 
-        //public List<ErrorDto> ValidateUrls(ICollection<string> urls)
-        //{
-        //    var errorList = new List<ErrorDto>();
-        //    Parallel.ForEach(urls, url =>
-        //        //foreach (var url in urls)
-        //    {
-        //        //_logger.Log("Working on: " + url);
-
-        //        if (AlreadyVisited(url))
-        //        {
-        //            _logger.Log("SeleniumPage already visited.");
-        //            return; //continue;
-        //        }
-
-        //        var status = _request.SendHeadRequest(new Uri(url));
-        //        if (IsErrorStatus(status))
-        //        {
-        //            AddError(errorList, status, url);
-        //        }
-
-        //        //TODO: Handle the false case?
-        //        if (_visitedPages.TryAdd(url, true))
-        //            _logger.Log("Success! Added " + url);
-        //    });//}
-        //    return errorList;
-        //}
-
-        public List<ErrorDto> Validate(IEnumerable<string> urls)
+        public void Validate(IEnumerable<Node> nodes)
         {
-            var errorList = new List<ErrorDto>();
-            Parallel.ForEach(urls, url =>
-                //foreach (var url in urls)
+            Parallel.ForEach(nodes, node =>
             {
-                //_logger.Log("Working on: " + url);
-
-                if (AlreadyVisited(url))
+                if (node.GetVisited()) return;
+                var response = _httpClient.SendHeadRequest(node);
+                if (response.StatusCode == default)
                 {
-                    _logger.Log($"Url {url} already visited.");
-                    return; //continue;
+                    if (response.ErrorMessage.Equals(
+                        "An error occurred while sending the request. The response ended prematurely."))
+                    {
+                        response = SendRequest(node);
+                    }
+                    if (response.StatusCode == default)
+                    {
+                        node.AddError(response.ErrorMessage);
+                    }
                 }
 
-                var status = _request.SendHeadRequest(new Uri(url));
-                if (IsErrorStatus(status))
-                {
-                    AddError(errorList, status, url);
-                }
-
-                //TODO: Handle the false case?
-                if (_visitedPages.TryAdd(url, true))
-                    _logger.Log("Success! Added " + url);
-            });//}
-            return errorList;
-        }
-
-        //public List<ErrorDto> ValidateImages()
-        //{
-        //    var elements = _search.GetBy(By.XPath(".//img[@src]"));
-        //    _logger.Log($"Found {elements.Count} images.");
-
-        //    var errorList = new List<ErrorDto>();
-        //    Parallel.ForEach(elements, webElement =>
-        //    {
-        //        var uri = webElement.GetAttribute("src");
-        //        var status = _request.SendHeadRequest(new Uri(uri));
-        //        if (status >= 300 && status <= 599)
-        //        {
-        //            errorList.Add(new ErrorDto
-        //            {
-        //                //Element = webElement,
-        //                StatusCode = status,
-        //                Uri = uri
-        //            });
-        //        }
-        //    });
-        //    return errorList;
-        //}
-
-        private static bool IsErrorStatus(int status)
-        {
-            return status >= 300 && status <= 599;
-        }
-
-        private static bool AlreadyVisited(string uri)
-        {
-            return _visitedPages.ContainsKey(uri) && _visitedPages[uri];
-        }
-
-        private static void AddError(ICollection<ErrorDto> errorList, int status, string uri)
-        {
-            errorList.Add(new ErrorDto
-            {
-                StatusCode = status,
-                Uri = uri
+                node.SetStatusCode(response.StatusCode)
+                    .MakeVisited();
             });
         }
 
-        public List<ErrorDto> ValidateUrls(ICollection<string> urls)
+        private IRestResponse SendRequest(Node node)
         {
-            throw new NotImplementedException();
+            Thread.Sleep(500);
+            var response = _httpClient.SendHeadRequest(node);
+            return response;
         }
     }
 }

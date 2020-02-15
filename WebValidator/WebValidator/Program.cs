@@ -1,17 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using WebValidator.Configuration;
 using WebValidator.Crawler;
 using WebValidator.Json;
 using WebValidator.Logger;
+using WebValidator.Request;
 
 namespace WebValidator
 {
     internal class Program
     {
         private static string _baseUrl;
+        private static string _url;
         private static string _browser;
         private static int _depth;
         private static void Main()
@@ -19,12 +24,19 @@ namespace WebValidator
             InitConfig();
             ILogger logger = new ConsoleLogger();
             var watch = Stopwatch.StartNew();
+
             var crawler = new HtmlCrawler(logger, _depth, _baseUrl);
-            crawler.Crawl(0,_baseUrl);
+            crawler.Crawl(0, _url);
+
             var pages = crawler.GetPages();
+            new Validator.Validator(new RestClient()).Validate(pages.Values); // some pages are visited, but status code is 0
+
             watch.Stop();
 
             LogCrawlErrors(pages, logger);
+
+            var p = pages.Values.Where(p => p.GetStatusCode() == default).ToList();
+            var p2 = pages.Values.Where(p => p.GetStatusCode() == HttpStatusCode.OK).ToList();
 
             logger.Log($"Found: {pages.Count}");
             logger.Log("Search time: " + watch.Elapsed);
@@ -50,15 +62,16 @@ namespace WebValidator
         private static void InitConfig()
         {
             var config = ConfigurationLoader.GetOption<Config>();
-            _baseUrl = config.Url;
+            _url = config.Url;
             _browser = config.Browser;
             _depth = config.Depth;
+            _baseUrl = new Uri(_url).GetLeftPart(UriPartial.Authority);
         }
 
         private static void SaveToJson(IReadOnlyDictionary<string, Node> pages)
         {
-            var nodes = pages.Values.OrderBy(p => p.GetUrl());
-            var nodesDto = new VisitedPagesDto()
+            var nodes = pages.Values;
+            var nodesDto = new VisitedPagesDto
             {
                 Pages = new List<NodeDto>()
             };
@@ -75,27 +88,20 @@ namespace WebValidator
                     parentNodes = node.GetParentNodes().ToList();
                 }
 
-
                 nodesDto.Pages.Add(new NodeDto
                 {
                     ParentNodes = parentNodes,
                     StatusCode = node.GetStatusCode(),
-                    Url = node.GetUrl()
+                    Url = node.GetUrl(),
+                    Errors = node.GetErrors().ToList(),
+                    Visited = node.GetVisited()
                 });
+
+                nodesDto.Pages = nodesDto.Pages.OrderBy(p => p.StatusCode).ToList();
             }
             
 
             File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.json", new SaveToJson().Serialize(nodesDto));
         }
-
-        //private static IEnumerable<string> Check(string url)
-        //{
-        //    _page.OpenPage(new Uri(url), 5);
-        //    var urls = _page.GetAttributes("a", "href");
-        //    var errors = new Validator.Validator(new Request.Request(), new ConsoleLogger()).Validate(urls);
-        //    Logger.Log("Errors for " + url);
-        //    Logger.LogErrors(errors);
-        //    return urls;
-        //}
     }
 }
