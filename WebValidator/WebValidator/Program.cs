@@ -29,21 +29,16 @@ namespace WebValidator
             crawler.Crawl(0, _url);
 
             var pages = crawler.GetPages();
-            new Validator.Validator(new RestClient()).Validate(pages.Values); // some pages are visited, but status code is 0
+            new Validator.Validator(new RestClient()).Validate(pages.Values);
 
             watch.Stop();
 
             LogCrawlErrors(pages, logger);
 
-            var p = pages.Values.Where(p => p.GetStatusCode() == default).ToList();
-            var p2 = pages.Values.Where(p => p.GetStatusCode() == HttpStatusCode.OK).ToList();
-
             logger.Log($"Found: {pages.Count}");
             logger.Log("Search time: " + watch.Elapsed);
 
             SaveToJson(pages);
-
-            ////file:///D:\\Studia\\WebValidator\\Web\\Web1.html
         }
 
         private static void LogCrawlErrors(IReadOnlyDictionary<string, Node> pages, ILogger logger)
