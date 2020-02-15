@@ -1,11 +1,9 @@
-﻿using System;
-using System.Net;
+﻿using RestSharp;
 
 namespace WebValidator.Request
 {
     public interface IHttpClient
     {
-        HttpStatusCode SendHeadRequest(Node node);
-        HttpStatusCode SendGetRequest(Uri uri);
+        IRestResponse SendHeadRequest(Node node);
     }
 }
