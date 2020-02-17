@@ -47,7 +47,7 @@ else
 
     protected override void OnInitialized()
     {
-        str = JsonConvert.DeserializeObject<VisitedPagesDto>(File.ReadAllText(Directory.GetCurrentDirectory() + @"\json.json"));
+        str = JsonConvert.DeserializeObject<VisitedPagesDto>(File.ReadAllText(Directory.GetCurrentDirectory() + @"\Results.json"));
         Pages = str.Pages;
     }
 
