@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
 using WebValidator.Configuration;
 using WebValidator.Crawler;
 using WebValidator.Json;
 using WebValidator.Logger;
 using WebValidator.Request;
+using WebValidator.SeleniumDriver;
 
 namespace WebValidator
 {
@@ -19,31 +18,31 @@ namespace WebValidator
         private static string _url;
         private static string _browser;
         private static int _depth;
+        private static ICrawler _crawler;
+        private static ILogger _logger;
+
         private static void Main()
         {
             InitConfig();
-            ILogger logger = new ConsoleLogger();
+            _logger = new ConsoleLogger();
+            InitCrawler();
+
             var watch = Stopwatch.StartNew();
 
-            var crawler = new HtmlCrawler(logger, _depth, _baseUrl);
-            crawler.Crawl(0, _url);
+            //var crawler = new HtmlCrawler(_logger, _depth, _baseUrl);
+            _crawler.Crawl(0, _url);
 
-            var pages = crawler.GetPages();
-            new Validator.Validator(new RestClient()).Validate(pages.Values); // some pages are visited, but status code is 0
+            var pages = _crawler.GetPages();
+            new Validator.Validator(new RestClient()).Validate(pages.Values);
 
             watch.Stop();
 
-            LogCrawlErrors(pages, logger);
+            LogCrawlErrors(pages, _logger);
 
-            var p = pages.Values.Where(p => p.GetStatusCode() == default).ToList();
-            var p2 = pages.Values.Where(p => p.GetStatusCode() == HttpStatusCode.OK).ToList();
-
-            logger.Log($"Found: {pages.Count}");
-            logger.Log("Search time: " + watch.Elapsed);
+            _logger.Log($"Found: {pages.Count}");
+            _logger.Log("Search time: " + watch.Elapsed);
 
             SaveToJson(pages);
-
-            ////file:///D:\\Studia\\WebValidator\\Web\\Web1.html
         }
 
         private static void LogCrawlErrors(IReadOnlyDictionary<string, Node> pages, ILogger logger)
@@ -66,6 +65,17 @@ namespace WebValidator
             _browser = config.Browser;
             _depth = config.Depth;
             _baseUrl = new Uri(_url).GetLeftPart(UriPartial.Authority);
+        }
+
+        private static void InitCrawler()
+        {
+            if (_browser is null)
+            {
+                _crawler = new HtmlCrawler(_logger, _depth, _baseUrl);
+                return;
+            }
+
+            _crawler = new SeleniumCrawler(_browser, _logger, new SeleniumDriverInitilizer(), _depth, _baseUrl); 
         }
 
         private static void SaveToJson(IReadOnlyDictionary<string, Node> pages)
