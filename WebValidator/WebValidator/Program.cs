@@ -69,7 +69,7 @@ namespace WebValidator
 
         private static void InitCrawler()
         {
-            if (_browser is null)
+            if (String.IsNullOrEmpty(_browser))
             {
                 _crawler = new HtmlCrawler(_logger, _depth, _baseUrl);
                 return;
@@ -111,7 +111,7 @@ namespace WebValidator
             }
             
 
-            File.WriteAllText(Directory.GetCurrentDirectory() + @"\json.json", new SaveToJson().Serialize(nodesDto));
+            File.WriteAllText(Directory.GetCurrentDirectory() + @"\Results.json", new SaveToJson().Serialize(nodesDto));
         }
     }
 }
